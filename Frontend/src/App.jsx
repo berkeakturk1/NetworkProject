@@ -8,6 +8,7 @@ const ImageUploader = () => {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [cameraMode, setCameraMode] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -86,7 +87,6 @@ const ImageUploader = () => {
     const tracks = stream.getTracks();
     tracks.forEach((track) => track.stop());
 
-    // Send captured image to backend
     const formData = new FormData();
     formData.append("image", dataUrlToFile(dataUrl, "captured.jpg"));
     setLoading(true);
@@ -113,6 +113,14 @@ const ImageUploader = () => {
       u8arr[n] = bstr.charCodeAt(n);
     }
     return new File([u8arr], filename, { type: mime });
+  };
+
+  const handleImageClick = (imageSrc) => {
+    setEnlargedImage(imageSrc); // Set the image to be displayed in the modal
+  };
+
+  const closeEnlargedImage = () => {
+    setEnlargedImage(null); // Close the modal
   };
 
   const themeStyles = {
@@ -143,13 +151,13 @@ const ImageUploader = () => {
 
       {/* Camera Mode */}
       {cameraMode && (
-        <div style={{ textAlign: "center", alignItems: "center"}}>
+        <div style={{ textAlign: "center", alignItems: "center" }}>
           <video ref={videoRef} style={{ maxWidth: "100%", borderRadius: "10px" }}></video>
           <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
-          <div style={{ textAlign: "center", alignItems: "center"}}>
-          <button style={{ ...buttonStyles, marginTop: "20px" }} onClick={takePicture}>
-            Capture Photo
-          </button>
+          <div style={{ textAlign: "center", alignItems: "center" }}>
+            <button style={{ ...buttonStyles, marginTop: "20px" }} onClick={takePicture}>
+              Capture Photo
+            </button>
           </div>
           <button
             style={{ ...buttonStyles, marginTop: "10px" }}
@@ -188,7 +196,7 @@ const ImageUploader = () => {
               onChange={(e) => handleFileChange(e.target.files[0])}
             />
           </div>
-          <div style={{ textAlign: "center", marginTop: "15px", alignItems: "center"}}>
+          <div style={{ textAlign: "center", marginTop: "15px", alignItems: "center" }}>
             <button style={buttonStyles} onClick={openCamera}>
               Take a Picture Instead
             </button>
@@ -212,6 +220,7 @@ const ImageUploader = () => {
                 ? "0 4px 6px rgba(255, 255, 255, 0.1)"
                 : "0 4px 6px rgba(0, 0, 0, 0.1)",
             }}
+            onClick={() => handleImageClick(uploadedImage)}
           />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <button style={buttonStyles} onClick={resetUploader}>
@@ -250,10 +259,43 @@ const ImageUploader = () => {
                       ? "0 4px 6px rgba(255, 255, 255, 0.1)"
                       : "0 4px 6px rgba(0, 0, 0, 0.1)",
                   }}
+                  onClick={() =>
+                    handleImageClick(`data:image/jpeg;base64,${filteredImages[filterName]}`)
+                  }
                 />
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Enlarged Image Modal */}
+      {enlargedImage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={closeEnlargedImage}
+        >
+          <img
+            src={enlargedImage}
+            alt="Enlarged"
+            style={{
+              maxWidth: "90%",
+              maxHeight: "90%",
+              borderRadius: "10px",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.5)",
+            }}
+          />
         </div>
       )}
     </div>
