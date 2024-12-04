@@ -12,14 +12,12 @@ const ImageUploader = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
+  const handleFileChange = (file) => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => setUploadedImage(reader.result);
       reader.readAsDataURL(file);
 
-      // Send file to backend
       const formData = new FormData();
       formData.append("image", file);
       setLoading(true);
@@ -35,6 +33,21 @@ const ImageUploader = () => {
           setLoading(false);
         });
     }
+  };
+
+  const resetUploader = () => {
+    setUploadedImage(null);
+    setFilteredImages({});
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    handleFileChange(file);
   };
 
   const toggleDarkMode = () => {
@@ -111,10 +124,11 @@ const ImageUploader = () => {
     backgroundColor: darkMode ? "#1f1f1f" : "#ffffff",
     color: darkMode ? "#ffffff" : "#000000",
     border: darkMode ? "1px solid #ffffff" : "1px solid #ccc",
-    padding: "10px 20px",
+    padding: "10px 15px",
     borderRadius: "5px",
     cursor: "pointer",
     transition: "all 0.3s ease",
+    marginTop: "15px",
   };
 
   return (
@@ -129,18 +143,29 @@ const ImageUploader = () => {
 
       {/* Camera Mode */}
       {cameraMode && (
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: "center", alignItems: "center"}}>
           <video ref={videoRef} style={{ maxWidth: "100%", borderRadius: "10px" }}></video>
           <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
-          <button style={{ ...buttonStyles, marginTop: "10px" }} onClick={takePicture}>
+          <div style={{ textAlign: "center", alignItems: "center"}}>
+          <button style={{ ...buttonStyles, marginTop: "20px" }} onClick={takePicture}>
             Capture Photo
+          </button>
+          </div>
+          <button
+            style={{ ...buttonStyles, marginTop: "10px" }}
+            onClick={() => {
+              setCameraMode(false);
+              resetUploader();
+            }}
+          >
+            Cancel
           </button>
         </div>
       )}
 
-      {/* File Upload */}
-      {!cameraMode && !uploadedImage && (
-        <div style={{ textAlign: "center" }}>
+      {/* Drag-and-Drop or File Upload */}
+      {!uploadedImage && !cameraMode && (
+        <div>
           <div
             style={{
               border: `2px dashed ${darkMode ? "#ffffff" : "#007bff"}`,
@@ -150,48 +175,56 @@ const ImageUploader = () => {
               cursor: "pointer",
               backgroundColor: darkMode ? "#1f1f1f" : "#ffffff",
             }}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
             onClick={() => document.getElementById("file-input").click()}
           >
-            <p style={{ color: darkMode ? "#aaaaaa" : "#000000" }}>Click or drag & drop an image here</p>
+            <p style={{ color: darkMode ? "#aaaaaa" : "#000000" }}>Drag & drop an image here, or click to upload</p>
+            <input
+              id="file-input"
+              type="file"
+              style={{ display: "none" }}
+              accept="image/*"
+              onChange={(e) => handleFileChange(e.target.files[0])}
+            />
           </div>
-          <input
-            id="file-input"
-            type="file"
-            style={{ display: "none" }}
-            accept="image/*"
-            onChange={handleFileChange}
-          />
-          <p style={{ margin: "10px 0" }}>Or</p>
-          <button style={buttonStyles} onClick={openCamera}>
-            Open Camera
-          </button>
+          <div style={{ textAlign: "center", marginTop: "15px", alignItems: "center"}}>
+            <button style={buttonStyles} onClick={openCamera}>
+              Take a Picture Instead
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Original Image Preview */}
+      {/* Display Uploaded Image */}
       {uploadedImage && (
-        <div style={{ marginTop: "20px", textAlign: "center" }}>
+        <div style={{ textAlign: "center", marginTop: "20px" }}>
           <h3>Original Image:</h3>
           <img
             src={uploadedImage}
-            alt="Uploaded or Captured"
+            alt="Uploaded"
             style={{
               maxWidth: "300px",
               maxHeight: "300px",
-              marginBottom: "20px",
+              marginBottom: "15px",
               borderRadius: "10px",
               boxShadow: darkMode
                 ? "0 4px 6px rgba(255, 255, 255, 0.1)"
                 : "0 4px 6px rgba(0, 0, 0, 0.1)",
             }}
           />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <button style={buttonStyles} onClick={resetUploader}>
+              Upload New Picture
+            </button>
+          </div>
         </div>
       )}
 
       {/* Loading State */}
       {loading && <p style={{ textAlign: "center", marginTop: "20px" }}>Processing image...</p>}
 
-      {/* Filtered Images Grid */}
+      {/* Display Filtered Images */}
       {!loading && Object.keys(filteredImages).length > 0 && (
         <div>
           <h3>Filtered Images:</h3>
@@ -205,7 +238,7 @@ const ImageUploader = () => {
           >
             {Object.keys(filteredImages).map((filterName) => (
               <div key={filterName} style={{ textAlign: "center" }}>
-                <p style={{ marginBottom: "10px" }}>{filterName}</p>
+                <p>{filterName}</p>
                 <img
                   src={`data:image/jpeg;base64,${filteredImages[filterName]}`}
                   alt={filterName}
