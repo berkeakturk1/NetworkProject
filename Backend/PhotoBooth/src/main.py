@@ -16,12 +16,13 @@ fd = face_detector()
 ff = face_filters()
 stylizers = [
     None, None, None, None,
-    Stylizer('models/style1.pt'),
-    Stylizer('models/style2.pt'),
-    Stylizer('models/style3.pt'),
+    Stylizer('src/models/style1.pt'),
+    Stylizer('src/models/style2.pt'),
+    Stylizer('src/models/style3.pt'),
     None,
-    Stylizer('models/new.pt')
+    Stylizer('src/models/new.pt')
 ]
+
 
 filter_names = ["Circle Eyes", "Heart Eyes", "Cartoon", "Inverted", "Starry Night",
                 "Snake Skin", "Geometric", "Van Gogh", "My Style"]

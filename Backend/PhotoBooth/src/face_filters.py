@@ -8,14 +8,15 @@ class face_filters:
     smiley_image = None
 
     def __init__(self):
-        self.heart_image = cv2.imread("filter_images/heart.png", cv2.IMREAD_UNCHANGED)
-        self.circle_image = cv2.imread("filter_images/circle.png", cv2.IMREAD_UNCHANGED)
-        self.smiley_image = cv2.imread("filter_images/mouth.png", cv2.IMREAD_UNCHANGED)
+        self.heart_image = cv2.imread("src/filter_images/heart.png", cv2.IMREAD_UNCHANGED)
+        self.circle_image = cv2.imread("src/filter_images/circle.png", cv2.IMREAD_UNCHANGED)
+        self.smiley_image = cv2.imread("src/filter_images/mouth.png", cv2.IMREAD_UNCHANGED)
 
-        self.van_gogh_left_eye = cv2.imread("filter_images/vangogh/left_eye.png", cv2.IMREAD_UNCHANGED)
-        self.van_gogh_right_eye = cv2.imread("filter_images/vangogh/right_eye.png", cv2.IMREAD_UNCHANGED)
-        self.van_gogh_nose = cv2.imread("filter_images/vangogh/nose.png", cv2.IMREAD_UNCHANGED)
-        self.van_gogh_mouth = cv2.imread("filter_images/vangogh/mouth.png", cv2.IMREAD_UNCHANGED)
+        self.van_gogh_left_eye = cv2.imread("src/filter_images/vangogh/left_eye.png", cv2.IMREAD_UNCHANGED)
+        self.van_gogh_right_eye = cv2.imread("src/filter_images/vangogh/right_eye.png", cv2.IMREAD_UNCHANGED)
+        self.van_gogh_nose = cv2.imread("src/filter_images/vangogh/nose.png", cv2.IMREAD_UNCHANGED)
+        self.van_gogh_mouth = cv2.imread("src/filter_images/vangogh/mouth.png", cv2.IMREAD_UNCHANGED)
+
 
     def warp_angle(self, image, alpha, beta, gamma, dx, dy, dz, f):
         """

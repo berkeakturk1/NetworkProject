@@ -14,7 +14,7 @@ from .model import ImageTransformerModel
 class Stylizer:
     def __init__(self, model_path: str, use_gpu: bool = True):
         self._device = 'cuda' if use_gpu and torch.cuda.is_available() else 'cpu'
-        self._device = 'mps'  if use_gpu and torch.backends.mps.is_available() else self._device
+        self._device = 'mps' if use_gpu and torch.backends.mps.is_available() else self._device
         self._load_model(model_path)
 
     def stylize(self, image: np.ndarray) -> np.ndarray:
@@ -25,6 +25,8 @@ class Stylizer:
         return transformed
 
     def _load_model(self, model_path: str) -> None:
+        # Ensure the model path is relative to the 'src' directory
+        model_path = Path(__file__).parent / model_path
         self._model = ImageTransformerModel().train().to(self._device)
         weights = torch.load(model_path, map_location=torch.device(self._device))
         self._model.load_state_dict(weights)
@@ -46,6 +48,10 @@ class Stylizer:
 
 
 def stylize(model_path: str, image_path: str, output_path: str) -> None:
+    model_path = str(Path(__file__).parent / model_path)
+    image_path = str(Path(__file__).parent / image_path)
+    output_path = str(Path(__file__).parent / output_path)
+
     assert image_utils.is_image(image_path)
     input_image = image_utils.load(image_path)
     stylizer = Stylizer(model_path)
@@ -54,6 +60,10 @@ def stylize(model_path: str, image_path: str, output_path: str) -> None:
 
 
 def stylize_folder(model_path: str, images_path: str, outputs_path: str) -> None:
+    model_path = str(Path(__file__).parent / model_path)
+    images_path = str(Path(__file__).parent / images_path)
+    outputs_path = str(Path(__file__).parent / outputs_path)
+
     stylizer = Stylizer(model_path)
     for image_path in tqdm(image_utils.list_images(images_path)):
         input_image = image_utils.load(image_path)
