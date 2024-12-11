@@ -4,9 +4,9 @@ import cv2
 import numpy as np
 import base64
 import os
-from face_filters import *
-from face_detector import *
-from stylize import Stylizer
+from .face_filters import *
+from .face_detector import *
+from .stylize import Stylizer
 
 app = Flask(__name__)
 CORS(app)
