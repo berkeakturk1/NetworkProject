@@ -33,41 +33,25 @@ facenet_required = [0, 1, 7]
 def apply_filters(image):
     results = {}
     face_args = None
+
     # Convert the image to OpenCV format
     nparr = np.frombuffer(image, np.uint8)
     frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-    for i, filter_name in enumerate(filter_names):
-        processed_frame = frame.copy()
-        if i in facenet_required:
-            face_args = fd.pred_face_pos(processed_frame)
-        if face_args or i not in facenet_required:
-            if i == 0:
-                processed_frame = ff.apply_circle_eyes_filter(processed_frame, *face_args)
-            elif i == 1:
-                processed_frame = ff.apply_heart_eyes_filter(processed_frame, *face_args)
-            elif i == 2:
-                processed_frame = ff.apply_cartoon_filter(processed_frame)
-            elif i == 3:
-                processed_frame = ff.apply_invert_filter(processed_frame)
-            elif i == 4:
-                processed_frame = stylizers[4].stylize(processed_frame)
-            elif i == 5:
-                processed_frame = stylizers[5].stylize(processed_frame)
-            elif i == 6:
-                processed_frame = stylizers[6].stylize(processed_frame)
-            elif i == 7:
-                processed_frame = stylizers[4].stylize(processed_frame)
-                processed_frame = ff.apply_van_gogh_filter(processed_frame, *face_args)
-            elif i == 8:
-                processed_frame = stylizers[8].stylize(processed_frame)
-
+    # Only apply the first filter ("Circle Eyes")
+    processed_frame = frame.copy()
+    face_args = fd.pred_face_pos(processed_frame)
+    
+    if face_args:
+        processed_frame = ff.apply_circle_eyes_filter(processed_frame, *face_args)
+        
         # Encode image to base64 for JSON response
         _, buffer = cv2.imencode('.jpg', processed_frame)
         image_base64 = base64.b64encode(buffer).decode('utf-8')
-        results[filter_name] = image_base64
+        results["Circle Eyes"] = image_base64
 
     return results
+
 
 
 @app.route('/upload', methods=['POST'])
