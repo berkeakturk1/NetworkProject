@@ -4,7 +4,7 @@ import numpy as np
 import math
 import cv2
 
-from fast_mtcnn import FastMTCNN
+from .fast_mtcnn import FastMTCNN
 
 class face_detector:
     

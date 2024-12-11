@@ -1,10 +1,10 @@
 import cv2
 import time
 
-from face_filters import *
-from face_detector import *
+from .face_filters import *
+from .face_detector import *
 
-from stylize import Stylizer
+from .stylize import Stylizer
 
 from multiprocessing import Process, Queue
 
