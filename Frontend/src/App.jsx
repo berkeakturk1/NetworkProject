@@ -18,13 +18,13 @@ const ImageUploader = () => {
       const reader = new FileReader();
       reader.onload = () => setUploadedImage(reader.result);
       reader.readAsDataURL(file);
-
+  
       const formData = new FormData();
       formData.append("image", file);
       setLoading(true);
-
+  
       axios
-        .post("http://127.0.0.1:5000/upload", formData)
+        .post("http://13.53.41.106:5000/upload", formData) // Use public IP or relative path
         .then((response) => {
           setFilteredImages(response.data);
           setLoading(false);
@@ -35,6 +35,7 @@ const ImageUploader = () => {
         });
     }
   };
+  
 
   const resetUploader = () => {
     setUploadedImage(null);
@@ -77,22 +78,22 @@ const ImageUploader = () => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
+  
     const dataUrl = canvas.toDataURL("image/jpeg");
     setUploadedImage(dataUrl);
     setCameraMode(false);
-
+  
     // Stop the camera stream
     const stream = video.srcObject;
     const tracks = stream.getTracks();
     tracks.forEach((track) => track.stop());
-
+  
     const formData = new FormData();
     formData.append("image", dataUrlToFile(dataUrl, "captured.jpg"));
     setLoading(true);
-
+  
     axios
-      .post("http://127.0.0.1:5000/upload", formData)
+      .post("http://13.53.41.106:5000/upload", formData) // Use public IP or relative path
       .then((response) => {
         setFilteredImages(response.data);
         setLoading(false);
@@ -102,6 +103,7 @@ const ImageUploader = () => {
         setLoading(false);
       });
   };
+  
 
   const dataUrlToFile = (dataUrl, filename) => {
     const arr = dataUrl.split(",");
