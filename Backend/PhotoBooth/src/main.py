@@ -16,11 +16,11 @@ fd = face_detector()
 ff = face_filters()
 stylizers = [
     None, None, None, None,
-    Stylizer('src/models/style1.pt'),
-    Stylizer('src/models/style2.pt'),
-    Stylizer('src/models/style3.pt'),
+    Stylizer('models/style1.pt'),
+    Stylizer('models/style2.pt'),
+    Stylizer('models/style3.pt'),
     None,
-    Stylizer('src/models/new.pt')
+    Stylizer('models/new.pt')
 ]
 
 
