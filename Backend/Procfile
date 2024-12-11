@@ -1,0 +1,1 @@
+web: python photobooth/src/main.py
