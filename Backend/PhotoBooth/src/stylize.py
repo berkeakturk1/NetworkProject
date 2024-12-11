@@ -7,7 +7,7 @@ from torch import Tensor
 from torchvision.transforms import functional as T
 from tqdm import tqdm
 
-import .image_utils
+from . import image_utils
 from .model import ImageTransformerModel
 
 
