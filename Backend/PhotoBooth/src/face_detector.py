@@ -27,7 +27,7 @@ class face_detector:
             device='cpu'
         )
 
-        self.detector = cv2.CascadeClassifier("src/models/face_filter.xml")
+        self.detector = cv2.CascadeClassifier("models/face_filter.xml")
 
 
     def detect_faces(self, image):
