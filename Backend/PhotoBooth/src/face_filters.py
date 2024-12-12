@@ -8,7 +8,7 @@ class face_filters:
     smiley_image = None
 
     def __init__(self):
-                self.heart_image = cv2.imread("filter_images/heart.png", cv2.IMREAD_UNCHANGED)
+        self.heart_image = cv2.imread("filter_images/heart.png", cv2.IMREAD_UNCHANGED)
         self.circle_image = cv2.imread("filter_images/circle.png", cv2.IMREAD_UNCHANGED)
         self.smiley_image = cv2.imread("filter_images/mouth.png", cv2.IMREAD_UNCHANGED)
 
