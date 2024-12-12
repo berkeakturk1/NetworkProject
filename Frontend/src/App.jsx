@@ -23,17 +23,20 @@ const ImageUploader = () => {
       formData.append("image", file);
       setLoading(true);
 
-      axios
-        .post("https://networkproject-p52c.onrender.com/upload", formData)
-        .then((response) => {
-          const filtered = response.data["Circle Eyes"]; // Access the single filter
-          setFilteredImage(filtered);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error uploading image:", error);
-          setLoading(false);
-        });
+      axios.post("http://34.29.116.18:5000/upload", formData)
+  .then((response) => {
+    const filtered = response.data["Circle Eyes"];
+    setFilteredImage(filtered);  // No prefix added here
+    setLoading(false);
+  })
+  .catch((error) => {
+    console.error("Error uploading image:", error);
+    setLoading(false);
+  });
+
+
+
+
     }
   };
 

@@ -33,27 +33,35 @@ facenet_required = [0, 1, 7]
 
 def apply_filters(image):
     results = {}
-    face_args = None
-
+    
     # Convert the image to OpenCV format
     nparr = np.frombuffer(image, np.uint8)
     frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-    # Only apply the first filter ("Circle Eyes")
-    processed_frame = frame.copy()
-    face_args = fd.pred_face_pos(processed_frame)
-    
-    if face_args:
-        processed_frame = ff.apply_circle_eyes_filter(processed_frame, *face_args)
+    for i, filter_name in enumerate(filter_names):
+        processed_frame = frame.copy()
         
-        # Encode image to base64 for JSON response
+        # Apply face detection for filters that require face positions
+        if i in facenet_required:
+            face_args = fd.pred_face_pos(processed_frame)
+            if not face_args:
+                results[filter_name] = None
+                continue
+            if i == 0:  # Circle Eyes filter
+                processed_frame = ff.apply_circle_eyes_filter(processed_frame, *face_args)
+            elif i == 1:  # Heart Eyes filter
+                processed_frame = ff.apply_heart_eyes_filter(processed_frame, *face_args)
+        
+        # Apply stylizers if available
+        elif stylizers[i]:
+            processed_frame = stylizers[i].stylize(processed_frame)
+        
+        # Encode the processed image to base64
         _, buffer = cv2.imencode('.jpg', processed_frame)
         image_base64 = base64.b64encode(buffer).decode('utf-8')
-        results["Circle Eyes"] = image_base64
+        results[filter_name] = image_base64
 
     return results
-
-
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
