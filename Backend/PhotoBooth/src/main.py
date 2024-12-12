@@ -9,7 +9,7 @@ from face_detector import *
 from stylize import Stylizer
 
 app = Flask(__name__)
-CORS(app, resources={r"/upload": {"origins": "https://berkeaturk1.github.io"}})
+CORS(app)
 
 
 # Initialize filters and stylizers
