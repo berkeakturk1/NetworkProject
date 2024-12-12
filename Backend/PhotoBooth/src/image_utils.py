@@ -7,9 +7,8 @@ from torch import Tensor
 from torchvision.transforms import functional as T
 from tqdm import tqdm
 
-import image_utils
 from model import ImageTransformerModel
-
+import image_utils  # Ensure image_utils is imported
 
 class Stylizer:
     def __init__(self, model_path: str, use_gpu: bool = True):
@@ -42,7 +41,11 @@ class Stylizer:
         image_t.squeeze_(0)
         image_t = image_t.detach().cpu()
         image_pil = T.to_pil_image(image_t)
-        image = image_utils.to_numpy(image_pil)
+
+        # Convert PIL Image to NumPy array directly
+        image = np.array(image_pil)
+
+        # Convert RGB to BGR for OpenCV compatibility
         image = image[:, :, ::-1].copy()
         return (image * 255).astype('uint8')
 
