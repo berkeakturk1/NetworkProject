@@ -1,84 +1,78 @@
-from glob import glob
-from typing import Union, Tuple, List
+from pathlib import Path
 
 import numpy as np
-from PIL import Image
+import torch
+from fire import Fire
+from torch import Tensor
+from torchvision.transforms import functional as T
+from tqdm import tqdm
+
+from . import image_utils
+from .model import ImageTransformerModel
 
 
-def load(path: str, as_float32: bool = True, channels_first: bool = False) -> np.ndarray:
-    image_pil = Image.open(path).convert("RGB")
-    image_np = np.array(image_pil)
+class Stylizer:
+    def __init__(self, model_path: str, use_gpu: bool = True):
+        self._device = 'cuda' if use_gpu and torch.cuda.is_available() else 'cpu'
+        self._device = 'mps' if use_gpu and torch.backends.mps.is_available() else self._device
+        self._load_model(model_path)
 
-    if as_float32:
-        image_np = image_np.astype(np.float32) / 255.0
+    def stylize(self, image: np.ndarray) -> np.ndarray:
+        image_t = self._preprocess(image)
+        with torch.no_grad():
+            transformed_t = self._model(image_t)
+        transformed = self._post_process(transformed_t)
+        return transformed
 
-    if channels_first:
-        image_np = np.transpose(image_np, (2, 0, 1))
+    def _load_model(self, model_path: str) -> None:
+        # Ensure the model path is relative to the 'src/models' directory
+        model_path = Path(__file__).parent / 'models' / model_path
+        self._model = ImageTransformerModel().train().to(self._device)
+        weights = torch.load(model_path, map_location=torch.device(self._device))
+        self._model.load_state_dict(weights)
 
-    return image_np
+    def _preprocess(self, image: np.ndarray) -> Tensor:
+        image_t = T.to_tensor(image)
+        image_t.unsqueeze_(0)
+        image_t = image_t.to(self._device)
+        return image_t
 
-
-def save(image: Union[np.ndarray, Image.Image], path: str) -> None:
-    to_pil(image).save(path)
-
-
-def show(image: Union[np.ndarray, Image.Image, str]) -> None:
-    if isinstance(image, str):
-        image = load(image)
-
-    to_pil(image).show()
-
-
-def resize(image: Union[np.ndarray, Image.Image], size: Tuple[int, int]) -> np.ndarray:
-    image_pil = to_pil(image)
-    image_pil_resized = image_pil.resize(size, Image.ANTIALIAS)
-
-    if isinstance(image, Image.Image):
-        result = image_pil_resized
-    else:
-        as_float32 = image.dtype == np.float32
-        result = to_numpy(image_pil_resized, as_float32)
-
-    return result
-
-
-def to_float32(image: np.ndarray) -> np.ndarray:
-    if image.dtype != np.float32:
-        image = image.astype('float32') / 255.0
-
-    return image
+    @staticmethod
+    def _post_process(image_t: Tensor) -> np.ndarray:
+        image_t.squeeze_(0)
+        image_t = image_t.detach().cpu()
+        image_pil = T.to_pil_image(image_t)
+        image = image_utils.to_numpy(image_pil)
+        image = image[:, :, ::-1].copy()
+        return (image * 255).astype('uint8')
 
 
-def to_uint8(image: np.ndarray) -> np.ndarray:
-    if image.dtype != np.uint8:
-        image = (image * 255).astype('uint8')
+def stylize(model_path: str, image_path: str, output_path: str) -> None:
+    base_dir = Path(__file__).parent
+    model_path = str(base_dir / 'models' / model_path)
+    image_path = str(base_dir / image_path)
+    output_path = str(base_dir / output_path)
 
-    return image
-
-
-def to_pil(image: Union[np.ndarray, Image.Image]) -> Image.Image:
-    if isinstance(image, Image.Image):
-        return image
-
-    image_uint8 = to_uint8(image)
-    image_pil = Image.fromarray(image_uint8)
-    return image_pil
+    assert image_utils.is_image(image_path)
+    input_image = image_utils.load(image_path)
+    stylizer = Stylizer(model_path)
+    stylized_image = stylizer.stylize(input_image)
+    image_utils.save(stylized_image, output_path)
 
 
-def to_numpy(image: Union[np.ndarray, Image.Image], as_float32: bool = True) -> np.ndarray:
-    image_uint8 = np.array(image)
-    if as_float32:
-        return to_float32(image_uint8)
-    else:
-        return image_uint8
+def stylize_folder(model_path: str, images_path: str, outputs_path: str) -> None:
+    base_dir = Path(__file__).parent
+    model_path = str(base_dir / 'models' / model_path)
+    images_path = str(base_dir / images_path)
+    outputs_path = str(base_dir / outputs_path)
+
+    stylizer = Stylizer(model_path)
+    for image_path in tqdm(image_utils.list_images(images_path)):
+        input_image = image_utils.load(image_path)
+        stylized_image = stylizer.stylize(input_image)
+        output_path = Path(outputs_path) / Path(image_path).name
+        image_utils.save(stylized_image, output_path)
 
 
-def is_image(path: str) -> bool:
-    image_extensions = ('.jpg', '.jpeg', '.png')
-    return path.lower().endswith(image_extensions)
-
-
-def list_images(path: str) -> List[str]:
-    all_files = glob(path + '/*.*')
-    image_paths = sorted(filter(is_image, all_files))
-    return image_paths
+if __name__ == '__main__':
+    Fire(stylize)
