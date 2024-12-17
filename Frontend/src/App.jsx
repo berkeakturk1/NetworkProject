@@ -1,6 +1,10 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
 import { FaSun, FaMoon, FaCamera } from "react-icons/fa";
+import logo from "./assets/img.png"; // Import the logo using a relative path
+
+// Inside the JSX:
+
 
 const ImageUploader = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -8,6 +12,7 @@ const ImageUploader = () => {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [cameraMode, setCameraMode] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -26,8 +31,7 @@ const ImageUploader = () => {
     formData.append("image", file);
     setLoading(true);
 
-    axios
-      .post("http://34.29.116.18:5000/upload", formData)
+    axios.post('https://networkbackend.duckdns.org/upload', formData)
       .then((response) => {
         setFilteredImages(response.data);
         setLoading(false);
@@ -36,6 +40,16 @@ const ImageUploader = () => {
         console.error("Error uploading image:", error);
         setLoading(false);
       });
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileChange(file);
+    }
   };
 
   const startCamera = () => {
@@ -56,7 +70,6 @@ const ImageUploader = () => {
     const imageDataUrl = canvasRef.current.toDataURL("image/png");
     setUploadedImage(imageDataUrl);
 
-    // Convert data URL to a file object for upload
     fetch(imageDataUrl)
       .then((res) => res.blob())
       .then((blob) => {
@@ -64,7 +77,6 @@ const ImageUploader = () => {
         uploadImage(file);
       });
 
-    // Stop the camera
     videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
     setCameraMode(false);
   };
@@ -73,10 +85,23 @@ const ImageUploader = () => {
     setUploadedImage(null);
     setFilteredImages({});
     setCameraMode(false);
+    setSelectedImage(null);
   };
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
+  };
+
+  const handleImageClick = (imageData) => {
+    setSelectedImage(`data:image/jpeg;base64,${imageData}`);
+  };
+
+  const downloadImage = () => {
+    const link = document.createElement("a");
+    link.href = selectedImage;
+    link.download = "filtered_image.jpg";
+    link.click();
+    setSelectedImage(null);
   };
 
   const themeStyles = {
@@ -110,7 +135,14 @@ const ImageUploader = () => {
   return (
     <div style={themeStyles}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <h1 style={{ fontSize: "2rem", margin: 0 }}>Photo Booth - Upload Image</h1>
+        <div style={{ display: "flex", alignItems: "center" }}>
+        <img
+  src={logo}
+  alt="Logo"
+  style={{ width: "100px", height: "100px", marginRight: "15px" }}
+/>
+          <h1 style={{ fontSize: "2rem", margin: 0 }}>Welcome to Photo Booth! 👋</h1>
+        </div>
         <div>
           <button style={buttonStyles} onClick={toggleDarkMode}>
             {darkMode ? <FaSun /> : <FaMoon />} {darkMode ? "Light Mode" : "Dark Mode"}
@@ -132,6 +164,8 @@ const ImageUploader = () => {
             backgroundColor: darkMode ? "#1f1f1f" : "#ffffff",
           }}
           onClick={() => document.getElementById("file-input").click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
         >
           <p style={{ color: darkMode ? "#aaaaaa" : "#000000" }}>Drag & drop an image here, or click to upload</p>
           <input
@@ -166,7 +200,7 @@ const ImageUploader = () => {
       <div style={imagesContainer}>
         {Object.entries(filteredImages).map(([filterName, imageData]) => (
           imageData && (
-            <div key={filterName} style={{ textAlign: "center" }}>
+            <div key={filterName} style={{ textAlign: "center", cursor: "pointer" }} onClick={() => handleImageClick(imageData)}>
               <h3>{filterName}:</h3>
               <img src={`data:image/jpeg;base64,${imageData}`} alt={filterName} style={{ maxWidth: "300px", maxHeight: "300px", borderRadius: "10px" }} />
             </div>
@@ -178,6 +212,29 @@ const ImageUploader = () => {
         <div style={{ textAlign: "center", marginTop: "20px" }}>
           <button style={buttonStyles} onClick={resetUploader}>
             Upload New Picture
+          </button>
+        </div>
+      )}
+
+      {selectedImage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setSelectedImage(null)}
+        >
+          <img src={selectedImage} alt="Enlarged" style={{ maxWidth: "80%", maxHeight: "80%", borderRadius: "10px" }} />
+          <button style={{ ...buttonStyles, position: "absolute", top: "20px", right: "20px" }} onClick={downloadImage}>
+            Download Image
           </button>
         </div>
       )}

@@ -10,6 +10,7 @@ from stylize import Stylizer
 
 app = Flask(__name__)
 CORS(app)
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024  # Set to 20MB
 
 
 # Initialize filters and stylizers
