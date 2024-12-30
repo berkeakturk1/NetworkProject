@@ -3,9 +3,6 @@ import axios from "axios";
 import { FaSun, FaMoon, FaCamera } from "react-icons/fa";
 import logo from "./assets/img.png"; // Import the logo using a relative path
 
-// Inside the JSX:
-
-
 const ImageUploader = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [filteredImages, setFilteredImages] = useState({});
@@ -27,20 +24,62 @@ const ImageUploader = () => {
   };
 
   const uploadImage = (file) => {
-    const formData = new FormData();
-    formData.append("image", file);
-    setLoading(true);
-
-    axios.post('https://networkbackend.duckdns.org/upload', formData)
-      .then((response) => {
-        setFilteredImages(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error uploading image:", error);
-        setLoading(false);
-      });
+    const reader = new FileReader();
+  
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+  
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxDimension = 800; // Set a maximum dimension (width or height)
+        let width = img.width;
+        let height = img.height;
+  
+        // Resize the image maintaining the aspect ratio
+        if (width > height && width > maxDimension) {
+          height = (height * maxDimension) / width;
+          width = maxDimension;
+        } else if (height > width && height > maxDimension) {
+          width = (width * maxDimension) / height;
+          height = maxDimension;
+        }
+  
+        canvas.width = width;
+        canvas.height = height;
+  
+        const context = canvas.getContext("2d");
+        context.drawImage(img, 0, 0, width, height);
+  
+        // Convert the image to a blob with compression
+        canvas.toBlob(
+          (blob) => {
+            const compressedFile = new File([blob], file.name, { type: file.type });
+            // Proceed with the upload of the compressed file
+            const formData = new FormData();
+            formData.append("image", compressedFile);
+            setLoading(true);
+  
+            axios
+              .post('https://networkbackend.duckdns.org/upload', formData)
+              .then((response) => {
+                setFilteredImages(response.data);
+                setLoading(false);
+              })
+              .catch((error) => {
+                console.error("Error uploading image:", error);
+                setLoading(false);
+              });
+          },
+          "image/jpeg", // Output format
+          0.7 // Compression quality (0.7 = 70%)
+        );
+      };
+    };
+  
+    reader.readAsDataURL(file); // Read the file as a Data URL
   };
+  
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -53,15 +92,21 @@ const ImageUploader = () => {
   };
 
   const startCamera = () => {
-    setCameraMode(true);
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        videoRef.current.srcObject = stream;
-      })
-      .catch((error) => {
-        console.error("Error accessing camera:", error);
-      });
+    if (/Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent)) {
+      // On mobile devices, use file input with capture attribute
+      document.getElementById("camera-input").click();
+    } else {
+      // Fallback to video feed for desktop or unsupported devices
+      setCameraMode(true);
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          videoRef.current.srcObject = stream;
+        })
+        .catch((error) => {
+          console.error("Error accessing camera:", error);
+        });
+    }
   };
 
   const capturePhoto = () => {
@@ -80,6 +125,18 @@ const ImageUploader = () => {
     videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
     setCameraMode(false);
   };
+
+  const handleFileCapture = (file) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setUploadedImage(reader.result); 
+        uploadImage(file); 
+      };
+      reader.readAsDataURL(file); 
+    }
+  };
+  
 
   const resetUploader = () => {
     setUploadedImage(null);
@@ -136,11 +193,11 @@ const ImageUploader = () => {
     <div style={themeStyles}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div style={{ display: "flex", alignItems: "center" }}>
-        <img
-  src={logo}
-  alt="Logo"
-  style={{ width: "100px", height: "100px", marginRight: "15px" }}
-/>
+          <img
+            src={logo}
+            alt="Logo"
+            style={{ width: "100px", height: "100px", marginRight: "15px" }}
+          />
           <h1 style={{ fontSize: "2rem", margin: 0 }}>Welcome to Photo Booth! 👋</h1>
         </div>
         <div>
@@ -150,6 +207,14 @@ const ImageUploader = () => {
           <button style={buttonStyles} onClick={startCamera}>
             <FaCamera /> Take Picture
           </button>
+          <input
+            id="camera-input"
+            type="file"
+            accept="image/*"
+            capture="user" // Use "user" for front camera
+            style={{ display: "none" }}
+            onChange={(e) => handleFileCapture(e.target.files[0])}
+          />
         </div>
       </div>
 
